@@ -9,13 +9,41 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron .",
-    "start": "concurrently -k \"yarn dev\" \"wait-on http://localhost:5173 && yarn electron\""
+    "start": "concurrently -k \"yarn dev\" \"wait-on http://localhost:5173 && yarn electron\"",
+    "package": "yarn build && electron-builder -c.extraMetadata.main=src/main.js"
+  },
+    "build": {
+      "productName": "electron-builder-start",
+      "appId": "org.simulatedgreg.electron-builder-start",
+      "asar":false,
+      "directories": {
+        "output": "electron-builder-output"
+      },
+
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "dist",
+      "package.json",
+      "src/main.js",
+      "src/preload.js",
+      "python_server/**/*"
+    ],
+    "win": {
+      "icon": "build/icons/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "ia32"
+          ]
+        }
+      ]
+    }
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.1",
     "concurrently": "^9.1.2",
-    "electron": "^34.2.0",
-    "electron-builder": "^25.1.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
@@ -26,6 +54,8 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8",
     "eslint": "^9.19.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.0.0",
