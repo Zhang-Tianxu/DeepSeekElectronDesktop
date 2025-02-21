@@ -1,5 +1,5 @@
 {
-  "name": "electron-react-demo",
+  "name": "DeepSeekDekstop",
   "private": true,
   "version": "0.0.0",
   "main": "src/main.js",
@@ -9,17 +9,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron .",
-    "start": "concurrently -k \"yarn dev\" \"wait-on http://localhost:5173 && yarn electron\"",
+    "start": "yarn build && concurrently -k \"yarn dev\" \"wait-on http://localhost:5173 && yarn electron\"",
     "package": "yarn build && electron-builder -c.extraMetadata.main=src/main.js"
   },
-    "build": {
-      "productName": "electron-builder-start",
-      "appId": "org.simulatedgreg.electron-builder-start",
-      "asar":false,
-      "directories": {
-        "output": "electron-builder-output"
-      },
-
+  "build": {
+    "productName": "DeepSeekDekstop",
+    "appId": "wayuekeji.com",
+    "asar": false, 
+    "directories": {
+      "output": "electron-builder-output"
+    },
     "files": [
       "build/**/*",
       "node_modules/**/*",
@@ -46,6 +45,7 @@
     "concurrently": "^9.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.0.0",
     "react-redux": "^9.2.0",
     "wait-on": "^8.0.2"
   },
