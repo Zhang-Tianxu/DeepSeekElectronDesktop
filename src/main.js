@@ -2,6 +2,16 @@ const { app, BrowserWindow,Menu, ipcMain, dialog } = require('electron');
 const {spawn} = require('child_process')
 const path = require('path');
 
+const menus = [
+  {
+    label: "test",
+    accelerator:"Ctrl+O",
+    click: ()=>{
+      console.log('test menu clicked')
+    }
+  }
+]
+
 fastapiProcess = null
 let deepSeekBackendHost
 function createWindow() {
@@ -36,6 +46,8 @@ function createWindow() {
       nodeIntegration: false // 禁用Node集成以增强安全
     }
   });
+  const menu = Menu.buildFromTemplate(menus)
+  Menu.setApplicationMenu(menu)
 
   // 开发环境加载Vite服务器，生产环境加载构建文件
   if (true || process.env.NODE_ENV === 'development') {
