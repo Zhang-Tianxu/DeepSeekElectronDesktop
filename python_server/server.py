@@ -1,21 +1,8 @@
-"""
-main_chat_wtih_native_code.py
-
-This module loads a local causal language model, generates responses based on user input, 
-and logs the thinking process along with the final answer. 
-
-The model is loaded with quantization settings to optimize memory usage and performance 
-(32 bits -> 8 bits).
-
-The orchestration of the process is handled by the main function, and individual steps are 
-broken down into dedicated functions.
-"""
-
 import logging
-import os
+import sys
 import time
+import random
 from typing import Tuple
-#from dotenv import load_dotenv
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextStreamer
 from transformers import TextIteratorStreamer
@@ -25,40 +12,30 @@ from fastapi.responses import StreamingResponse  # 关键导入
 from fastapi.middleware.cors import CORSMiddleware
 from threading import Thread
 import asyncio
+import os
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
+def is_gpu_available():
+    return torch.cuda.is_available()
+
+def get_base_path():
+    # 判断是否是打包后的可执行文件
+    if getattr(sys, 'frozen', False):
+        # 使用 exe 所在目录作为基础路径
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # 使用脚本所在目录作为基础路径
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return base_path
 
 def load_model() -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
-    """
-    Load the model and tokenizer with 8-bit quantization configuration to optimize memory usage
-    and inference performance.
-
-    This function loads the model and tokenizer dynamically based on the environment variables.
-    It also configures the model for 8-bit quantization, which reduces the memory footprint
-    and speeds up inference, with the additional flexibility to control how much of the model
-    is quantized via the 'llm_int8_threshold'.
-
-    The quantization is performed using the `BitsAndBytesConfig`:
-    - `load_in_8bit=True` ensures that the model weights are loaded in 8-bit precision (INT8),
-        reducing the model's memory requirements.
-    - `llm_int8_threshold=6.0` specifies a threshold for applying 8-bit quantization.
-    Weights with magnitudes larger than this threshold will be quantized to 8-bit precision,
-    while smaller weights may remain in higher precision to retain accuracy.
-
-    The model is loaded in a way that allows it to automatically balance between CPU
-    and GPU resources.
-
-    Returns:
-        Tuple: The tokenizer and model objects.
-    """
-    #load_dotenv()
     # Load model and tokenizer
     # model_name = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
     model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    # model_name = get_base_path() + "/model/"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-
 
     # Define the quantization configuration for 8-bit
     quantization_config = BitsAndBytesConfig(
@@ -97,51 +74,14 @@ def generate_chat_response(
     top_k: int = 50,
     top_p: float = 0.9,
 ) -> str:
-    """
-        Generate a response from the model based on the input prompt.
-
-        Args:
-            - prompt (str): The input prompt.
-            - tokenizer (AutoTokenizer): The tokenizer to preprocess the input.
-            - model (AutoModelForCausalLM): The model used for generating the response.
-            - max_length (int): The maximum length of the generated output.
-            - temperature (float): The randomness of the output.
-            - top_k (int): The number of top token choices.
-            - top_p (float): The cumulative probability threshold for nucleus sampling.
-
-        Returns:
-            Tuple[str, str]: The thinking steps and the final answer from the model.
-
-    .   #* About temp, top_k, top_p
-        Temperature controls the randomness of the generated text, with higher values
-        leading to more creative but less coherent output, and lower values resulting
-        in more predictable, deterministic responses.
-
-        Top-k limits token choices to the top k most likely options, reducing irrelevant
-        text but potentially limiting creativity.
-
-        Top-p (nucleus sampling) selects tokens dynamically until a cumulative probability
-        threshold is met, balancing diversity and coherence, often used in combination
-        with top-k.
-    """
-
-# Add a "thinking" instruction to the prompt
+    # Add a "thinking" instruction to the prompt
     thinking_prompt = f"""
     Question: {prompt}
     <think>
     Please reason through the problem step by step without repeating yourself. \
-Each step should be concise and progress logically toward the final answer:
+    Each step should be concise and progress logically toward the final answer:
     """
-
-    # Tokenize the input prompt
     inputs = tokenizer(thinking_prompt, return_tensors="pt")
-    # new_prompt = f"User:{prompt}\nAI:"
-    # Tokenize the input prompt
-    # inputs = tokenizer(new_prompt, return_tensors="pt")
-
-    # 将新输入加入到对话历史中
-    # inputs = torch.cat([chat_history, inputs], dim=-1) if chat_history is not None else inputs
-    # print(chat_history)
 
     # Move input tensors to the same device as the model
     device = next(model.parameters()).device
@@ -154,12 +94,10 @@ Each step should be concise and progress logically toward the final answer:
     with torch.no_grad():  # Do not compute grad. descent/no training involved
         logits = model(**inputs).logits
         outputs = model.generate(
-            # inputs.input_ids,
             **inputs,
             max_length=500,
             # max_new_tokens=max_length,
             pad_token_id=tokenizer.eos_token_id,
-            # past_key_values=chat_history_k_v,
             do_sample=True,  # have multi-options (tokens) picks 1 based on prob.
             streamer = streamer,
             temperature=temperature,
@@ -177,13 +115,8 @@ Each step should be concise and progress logically toward the final answer:
     minutes, seconds = divmod(elapsed_time, 60)
     time_str = f"{int(minutes):02}:{int(seconds):02}"
 
-    # chat_history_k_v = outputs.past_key_values
-    # print(chat_history_k_v)
     # Decode the full response
     final_answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    # print(final_answer)
-    # final_answer = final_answer.split('AI:')[-1].strip()
-    # print(final_answer)
     generated_responses.append(final_answer)
 
     # Log the thinking time and final response
@@ -192,34 +125,6 @@ Each step should be concise and progress logically toward the final answer:
 
     return final_answer
 
-
-def main():
-    """Orchestrate the loop"""
-    print("Chat with DeepSeek R1! Type 'exit' to end the chat.")
-
-    # Load the model and tokenizer
-    tokenizer, model = load_model()
-
-    #tokenizer = AutoTokenizer.from_pretrained("./model/")
-    #model = AutoModelForCausalLM.from_pretrained("./model/")
-
-    streamer = TextStreamer(tokenizer)
-
-    # 设置 pad_token 为 eos_token
-    #tokenizer.pad_token = tokenizer.eos_token
-    #model.config.pad_token_id = tokenizer.pad_token_id
-
-    while True:
-        user_input = input("\nYou: ")
-        if user_input.lower() == "exit":
-            break
-
-        # Generate and display the response
-        final_output = generate_chat_response(
-            prompt=user_input, tokenizer=tokenizer,model=model,streamer=streamer, max_length=3000
-        )
-        print(f"DeepSeek (Final Answer): {final_output}")
-        logger.info(f"Response: {final_output}")
 
 
 app = FastAPI()
@@ -263,6 +168,14 @@ async def async_generator(question):
     async for token in streamer:
         yield token
 
+@app.get("/gpu_available")
+def get_gpu_state():
+    res = is_gpu_available()
+    return res
+
+"""
+TODO: 修改为post，因为{prompt}中可能有/之类的字符，导致错误
+"""
 @app.get("/stream/{prompt}")
 async def generate_stream(prompt: str):
     tokenizer, model = load_model()
@@ -318,6 +231,34 @@ Each step should be concise and progress logically toward the final answer:
         }
     )
 
-if __name__ == '__main__':
+def commandLineChat():
+    print("Chat with DeepSeek R1! Type 'exit' to end the chat.")
+
+    # Load the model and tokenizer
+    tokenizer, model = load_model()
+
+    streamer = TextStreamer(tokenizer)
+
+    while True:
+        user_input = input("\nYou: ")
+        if user_input.lower() == "exit":
+            break
+
+        # Generate and display the response
+        final_output = generate_chat_response(
+            prompt=user_input, tokenizer=tokenizer,model=model,streamer=streamer, max_length=3000
+        )
+        print(f"DeepSeek (Final Answer): {final_output}")
+        logger.info(f"Response: {final_output}")
+
+def main():
+    # port = random.randint(49152,65535)
+    port = 50055
+    if len(sys.argv) > 1:
+        port = int(sys.argv[1])
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=port)
+    print("started")
+
+if __name__ == '__main__':
+    main()
