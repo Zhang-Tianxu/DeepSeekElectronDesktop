@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow,Menu, ipcMain, dialog } = require('electron');
 const {spawn} = require('child_process')
 const path = require('path');
 
@@ -52,6 +52,17 @@ app.whenReady().then(createWindow);
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+app.on("before-quit", () => {
+  dialog.showMessageBoxSync({
+    type:"warning",
+    title:"警告",
+    message:"即将退出"
+  })
+  if(fastapiProcess) {
+    fastapiProcess.kill('SIGINT')
+  }
+})
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
