@@ -13,12 +13,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from threading import Thread
 import asyncio
 import os
+from pydantic import BaseModel
 
 # Setup logging
 logger = logging.getLogger(__name__)
+model = None
+tokenizer = None
 
 def is_gpu_available():
     return torch.cuda.is_available()
+
 
 def get_base_path():
     # 判断是否是打包后的可执行文件
@@ -30,10 +34,12 @@ def get_base_path():
         base_path = os.path.dirname(os.path.abspath(__file__))
     return base_path
 
-def load_model() -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
+def load_model(model_name) -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
+    global model
+    global tokenizer
     # Load model and tokenizer
     # model_name = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
-    model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    # model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     # model_name = get_base_path() + "/model/"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -139,51 +145,60 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-@app.get("/chat/{question}")
-def test(question):
-    tokenizer, model = load_model()
-    streamer = TextStreamer(tokenizer)
-    final_output = generate_chat_response(
-        prompt=question, tokenizer=tokenizer,model=model,streamer=streamer, max_length=300
-        )
-    return final_output
-
-# 结合异步生成器
-@app.get("/chat2/{question}")
-async def async_generator(question):
-    tokenizer, model = load_model()
-    #streamer = TextIteratorStreamer(tokenizer)
-    streamer = TextStreamer(tokenizer)
-
-    # Tokenize the input prompt
-    inputs = tokenizer(question, return_tensors="pt")
-
-    # Move input tensors to the same device as the model
-    device = next(model.parameters()).device
-    inputs = {key: value.to(device) for key, value in inputs.items()}
-
-    #Thread(target=model.generate,
-    #        kwargs={**inputs,"max_length":3000, "do_sample":True,"streamer": streamer, "temperature":0.7, "top_k":50, "top_p":0.9}).start()
-    Thread(target=generate_chat_response, args=[question, tokenizer, model, streamer,3000,0.7,50,0.9]).start()
-    async for token in streamer:
-        yield token
+@app.get("/ping")
+def ping():
+    return "pong"
 
 @app.get("/gpu_available")
 def get_gpu_state():
     res = is_gpu_available()
     return res
 
+@app.get("/list_local_model")
+def list_local_models():
+    return {"model_names":[{
+        "name":"model",
+        "path":"./model/"
+    }]}
+
+@app.get("/current_model_name")
+def get_current_model_name():
+    if not model:
+        return ""
+    name = model.config.name_or_path
+    return name
+
+class AIModelInfoItem(BaseModel):
+    name: str
+
+@app.post("/load_model/")
+def load_model_by_name(model_info: AIModelInfoItem):
+    load_model(model_info.name)
+    return True
+
+@app.get("/chat/{question}")
+def test(question):
+    # tokenizer, model = load_model()
+    streamer = TextStreamer(tokenizer)
+    final_output = generate_chat_response(
+        prompt=question, tokenizer=tokenizer,model=model,streamer=streamer, max_length=300
+        )
+    return final_output
+
+class ChatItem(BaseModel):
+    qustion: str
+
 """
 TODO: 修改为post，因为{prompt}中可能有/之类的字符，导致错误
 """
-@app.get("/stream/{prompt}")
-async def generate_stream(prompt: str):
-    tokenizer, model = load_model()
+@app.post("/chat_dynamic")
+async def generate_stream(item: ChatItem):
+    # tokenizer, model = load_model()
     # 创建流式处理器
     streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True)
 
     thinking_prompt = f"""
-    Question: {prompt}
+    Question: {item.qustion}
     <think>
     Please reason through the problem step by step without repeating yourself. \
 Each step should be concise and progress logically toward the final answer:
@@ -231,32 +246,20 @@ Each step should be concise and progress logically toward the final answer:
         }
     )
 
-def commandLineChat():
-    print("Chat with DeepSeek R1! Type 'exit' to end the chat.")
-
-    # Load the model and tokenizer
-    tokenizer, model = load_model()
-
-    streamer = TextStreamer(tokenizer)
-
-    while True:
-        user_input = input("\nYou: ")
-        if user_input.lower() == "exit":
-            break
-
-        # Generate and display the response
-        final_output = generate_chat_response(
-            prompt=user_input, tokenizer=tokenizer,model=model,streamer=streamer, max_length=3000
-        )
-        print(f"DeepSeek (Final Answer): {final_output}")
-        logger.info(f"Response: {final_output}")
-
 def main():
     # port = random.randint(49152,65535)
     port = 50055
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
     import uvicorn
+
+    # 先加载模型，这样端口启动即表示模型加载完成
+    print("start load model")
+    # load_model("deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B")
+    print(get_base_path() + "/model")
+    load_model(get_base_path() + "/model")
+    print("load model finished")
+
     uvicorn.run(app, host="0.0.0.0", port=port)
     print("started")
 
