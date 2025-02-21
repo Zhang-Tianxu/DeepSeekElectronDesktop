@@ -2,6 +2,7 @@ const { app, BrowserWindow } = require('electron');
 const {spawn} = require('child_process')
 const path = require('path');
 
+fastapiProcess = null
 let deepSeekBackendHost
 function createWindow() {
   const ramdomPortStart = 49152
@@ -11,10 +12,12 @@ function createWindow() {
     return deepSeekBackendHost
   })
   // 启动 FastAPI 服务
+  const scriptPath = path.join(__dirname, '../python_server/dist/server.exe');
+
   /*
   const scriptPath = path.join(__dirname, '../python_server/server.py');
   console.log(scriptPath)
-  fastapiProcess = spawn('python', [scriptPath]);
+  fastapiProcess = spawn(scriptPath, [randomPort]);
 
   fastapiProcess.stdout.on('data', (data) => {
     console.log(`FastAPI: ${data}`);
