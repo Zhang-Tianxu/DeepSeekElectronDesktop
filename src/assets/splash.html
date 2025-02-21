@@ -1,0 +1,55 @@
+<!-- splash.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      background: transparent;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .loader {
+      width: 80px;
+      height: 80px;
+      animation: rotate 1.5s linear infinite;
+    }
+
+    @keyframes rotate {
+      100% { transform: rotate(360deg); }
+    }
+
+    .loader circle {
+      stroke: #2196F3;
+      stroke-width: 4;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 80;
+      animation: dash 1.5s ease-in-out infinite;
+    }
+
+    @keyframes dash {
+      0% { stroke-dashoffset: 80; }
+      50% { stroke-dashoffset: 20; }
+      100% { stroke-dashoffset: 80; }
+    }
+  </style>
+</head>
+<body>
+  <svg class="loader" viewBox="0 0 50 50">
+    <circle cx="25" cy="25" r="20" fill="none"/>
+  </svg>
+  <script>
+    window.splashAPI.onTaskUpdate((message) => {
+      document.body.innerHTML = `
+        <div class="error-message">
+          <h2>😞 初始化失败</h2>
+          <p>${message}</p>
+        </div>
+      `
+    })
+    </script>
+</body>
+</html>
