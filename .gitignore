@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 dist
+Output
+*.zip
 electron-builder-output
 python_server/dist
 python_server/build
