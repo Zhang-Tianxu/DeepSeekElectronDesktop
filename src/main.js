@@ -2,7 +2,14 @@ const { app, BrowserWindow } = require('electron');
 const {spawn} = require('child_process')
 const path = require('path');
 
+let deepSeekBackendHost
 function createWindow() {
+  const ramdomPortStart = 49152
+  const ramdomPortEnd = 65535
+  const randomPort = Math.floor(Math.random() * (ramdomPortEnd - ramdomPortStart + 1)) + ramdomPortStart
+  ipcMain.handle('get-deepseek-backend-host', ()=>{
+    return deepSeekBackendHost
+  })
   // 启动 FastAPI 服务
   /*
   const scriptPath = path.join(__dirname, '../python_server/server.py');

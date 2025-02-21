@@ -5,6 +5,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
 });
 
+contextBridge.exposeInMainWorld("globalVariables", {
+    getDeepSeekBackendHost:()=>ipcRenderer.invoke('get-deepseek-backend-host')
+});
+
 
 contextBridge.exposeInMainWorld('deepseek', {
 	chat: (id) =>{
