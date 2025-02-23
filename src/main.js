@@ -59,7 +59,7 @@ app.whenReady().then(() => {
     frame: true,      // 无边框
     alwaysOnTop: false, // 保持最前
     show:false,
-    icon: path.join(__dirname, '../public/logo.ico'),
+    icon: path.join(__dirname, '../public/icon.ico'),
     title:"DeepSeek-R1 本地软件",
     webPreferences: {
       preload: path.join(__dirname, 'splash_preload.js'), // 预加载脚本
@@ -156,7 +156,7 @@ function createWindow() {
     width: 800,
     height: 600,
     show:false,
-    icon: path.join(__dirname, '../public/logo.ico'),
+    icon: path.join(__dirname, '../public/icon.ico'),
     title:"DeepSeek-R1 本地软件",
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'), // 预加载脚本
