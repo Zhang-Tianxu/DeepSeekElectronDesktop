@@ -1,5 +1,5 @@
 {
-  "name": "DeepSeekDekstop",
+  "name": "DeepSeek-R1-Desktop",
   "private": true,
   "version": "0.0.0",
   "main": "src/main.js",
@@ -13,9 +13,9 @@
     "package": "yarn build && electron-builder -c.extraMetadata.main=src/main.js"
   },
   "build": {
-    "productName": "DeepSeekDekstop",
+    "productName": "DeepSeek-R1-Desktop",
     "appId": "wayuekeji.com",
-    "asar": false, 
+    "asar": false,
     "directories": {
       "output": "electron-builder-output"
     },
@@ -26,10 +26,12 @@
       "package.json",
       "src/main.js",
       "src/preload.js",
-      "python_server/**/*"
+      "src/splash_preload.js",
+      "python_server/**/*",
+      "src/assets"
     ],
     "win": {
-      "icon": "build/icons/icon.ico",
+      "icon": "logo.ico",
       "target": [
         {
           "target": "nsis",
@@ -42,6 +44,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.1",
+    "antd": "^5.24.1",
     "concurrently": "^9.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
