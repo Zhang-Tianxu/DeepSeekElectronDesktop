@@ -56,9 +56,7 @@ def load_model(model_name) -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
     # Load model
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        load_in_8bit=True,
         device_map="auto",  #! Dynamically balancing between CPU and GPU
-        torch_dtype=torch.float16,
         # offload_buffers = True,
         # quantization_config=quantization_config,  #! Quantization
     )
