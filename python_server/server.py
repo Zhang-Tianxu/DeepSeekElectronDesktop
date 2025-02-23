@@ -82,10 +82,10 @@ def generate_chat_response(
 ) -> str:
     # Add a "thinking" instruction to the prompt
     thinking_prompt = f"""
-    Question: {prompt}
+    问题：{prompt}
     <think>
-    Please reason through the problem step by step without repeating yourself. \
-    Each step should be concise and progress logically toward the final answer:
+    请逐步推理问题，不要重复自己的想法。\
+    每个步骤都应简洁明了，并按逻辑顺序逐步得出最终答案：
     """
     inputs = tokenizer(thinking_prompt, return_tensors="pt")
 
@@ -198,10 +198,10 @@ async def generate_stream(item: ChatItem):
     streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True)
 
     thinking_prompt = f"""
-    Question: {item.qustion}
+    问题：{item.qustion}
     <think>
-    Please reason through the problem step by step without repeating yourself. \
-Each step should be concise and progress logically toward the final answer:
+    请逐步推理问题，不要重复自己的想法。\
+    每个步骤都应简洁明了，并按逻辑顺序逐步得出最终答案：
     """
 
     # Tokenize the input prompt
