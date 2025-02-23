@@ -57,18 +57,22 @@ app.whenReady().then(() => {
     height: 600,
     transparent: false, // 透明背景
     frame: true,      // 无边框
-    alwaysOnTop: true, // 保持最前
+    alwaysOnTop: false, // 保持最前
+    show:false,
+    icon: path.join(__dirname, '../public/logo.ico'),
+    title:"DeepSeek-R1 本地软件",
     webPreferences: {
       preload: path.join(__dirname, 'splash_preload.js'), // 预加载脚本
       nodeIntegration: false,
       contextIsolation:true
     }
   })
+  splashWindow.maximize()
   Menu.setApplicationMenu(null)
   // 加载启动动画页面
   splashWindow.loadFile(path.join(__dirname, 'assets/splash.html'));
   splashWindow.show()
-  splashWindow.webContents.openDevTools(); // 打开开发者工具
+  // splashWindow.webContents.openDevTools(); // 打开开发者工具
 
   /*
   // run without backend
@@ -96,10 +100,9 @@ app.whenReady().then(() => {
 })
 
 function startBackend(succeedCallbasck, errorCallback) {
-  const ramdomPortStart = 49152
-  const ramdomPortEnd = 65535
+  const ramdomPortStart = 8000
+  const ramdomPortEnd = 20000
   const randomPort = Math.floor(Math.random() * (ramdomPortEnd - ramdomPortStart + 1)) + ramdomPortStart
-  console.log(randomPort)
   deepSeekBackendHost = "http:/localhost:" + randomPort
   // deepSeekBackendHost = "http:/localhost:" + "50055"
   ipcMain.handle('get-deepseek-backend-host', () => {
@@ -152,14 +155,19 @@ function createWindow() {
   win = new BrowserWindow({
     width: 800,
     height: 600,
+    show:false,
+    icon: path.join(__dirname, '../public/logo.ico'),
+    title:"DeepSeek-R1 本地软件",
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'), // 预加载脚本
       contextIsolation: true, // 启用上下文隔离
       nodeIntegration: false // 禁用Node集成以增强安全
     }
   });
+  win.maximize()
   const menu = Menu.buildFromTemplate(menus)
   Menu.setApplicationMenu(menu)
+  // Menu.setApplicationMenu(null)
 
   // 开发环境加载Vite服务器，生产环境加载构建文件
   // if (true || process.env.NODE_ENV === 'development') {
