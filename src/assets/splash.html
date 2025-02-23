@@ -1,6 +1,7 @@
 <!-- splash.html -->
 <!DOCTYPE html>
 <html>
+
 <head>
   <style>
     body {
@@ -10,6 +11,7 @@
       align-items: center;
       height: 100vh;
       margin: 0;
+      width: 100%;
     }
 
     .loader {
@@ -19,7 +21,9 @@
     }
 
     @keyframes rotate {
-      100% { transform: rotate(360deg); }
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     .loader circle {
@@ -31,25 +35,58 @@
     }
 
     @keyframes dash {
-      0% { stroke-dashoffset: 80; }
-      50% { stroke-dashoffset: 20; }
-      100% { stroke-dashoffset: 80; }
+      0% {
+        stroke-dashoffset: 80;
+      }
+
+      50% {
+        stroke-dashoffset: 20;
+      }
+
+      100% {
+        stroke-dashoffset: 80;
+      }
     }
   </style>
 </head>
+
 <body>
-  <svg class="loader" viewBox="0 0 50 50">
-    <circle cx="25" cy="25" r="20" fill="none"/>
-  </svg>
+  <div style="width: 100%;justify-content: center;align-items: center;display: flex;flex-direction: column;">
+    <div style="display: flex; width: 100%;align-items: center;justify-content: center;padding-bottom: 5rem;">
+      <image src="logo.png" style="width: 30px;"></image><b>上海蛙跃科技有限公司</b>
+    </div>
+    <div style="width: 100%; display: flex;align-items: center;flex-direction: column;margin-bottom: 2rem;">
+      <ul>
+        <b>后续开发计划</b>
+        <li>支持连续对话</li>
+        <li>支持模型切换</li>
+        <li>支持图片、PDF文件理解</li>
+
+      </ul>
+    </div>
+    <div style="width: 100%;text-align: center;">
+      模型加载可能需要<b>一分钟</b>，请耐心等待。若长时间没反应，可尝试重启
+    </div>
+    <div style="display: flex;width: 100%;align-items: center; justify-content: center;margin-bottom: 2rem;">
+      <svg class="loader" viewBox="0 0 50 50">
+        <circle cx="25" cy="25" r="20" fill="none" />
+      </svg>
+    </div>
+    <div style="display: flex;flex-direction: column;align-items: center;">
+      如有问题，请扫码反馈：
+      <image src="fallback_qrcode.png" style="width: 200px;"></image>
+    </div>
+  </div>
   <script>
     window.splashAPI.onTaskUpdate((message) => {
       document.body.innerHTML = `
         <div class="error-message">
-          <h2>😞 初始化失败</h2>
+          <h2>😞 启动失败，请联系管理员</h2>
           <p>${message}</p>
         </div>
       `
     })
-    </script>
+  </script>
 </body>
+
 </html>
